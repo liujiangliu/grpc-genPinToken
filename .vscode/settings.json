@@ -1,0 +1,7 @@
+{
+    "java.jdt.ls.java.home": "/usr/local/java/jdk-24.0.1",
+    "java.project.sourcePaths": [
+        "src/main/java",
+        "target/generated-sources/annotations"
+    ]
+}

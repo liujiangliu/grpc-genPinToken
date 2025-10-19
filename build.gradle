@@ -1,0 +1,35 @@
+plugins {
+    id 'java'
+    id 'com.google.protobuf' version '0.8.17'
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'io.grpc:grpc-netty-shaded:1.43.2'
+    implementation 'io.grpc:grpc-protobuf:1.43.2'
+    implementation 'io.grpc:grpc-stub:1.43.2'
+    implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
+    runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.11.5'
+    runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.11.5'
+    testImplementation 'junit:junit:4.13.2'
+}
+
+protobuf {
+    protoc {
+        artifact = "com.google.protobuf:protoc:3.17.3"
+    }
+    generateProtoTasks {
+        all().each { task ->
+            task.builtins {
+                java {}
+            }
+        }
+    }
+}
+
+compileJava {
+    options.compilerArgs += ['-parameters']
+}

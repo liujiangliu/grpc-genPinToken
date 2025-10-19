@@ -1,0 +1,44 @@
+export MAVEN_OPTS="--add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.security=ALL-UNNAMED"
+# 清理并编译项目
+mvn clean compile
+
+# 编译并生成protobuf文件
+mvn compile
+
+# 打包项目（生成jar文件）
+mvn package
+
+# 运行测试
+mvn test
+
+# 安装到本地仓库
+mvn install
+
+# 清理项目
+mvn clean
+
+# 直接运行服务器
+mvn exec:java -Dexec.mainClass="com.example.grpc.GrpcServer"
+# 运行客户端（需要先启动服务器）
+mvn exec:java -Dexec.mainClass="com.example.grpc.GrpcClient"
+
+
+#mvn protobuf:compile protobuf:compile-custom
+
+
+
+# 在一个终端运行服务器（保持运行）
+mvn exec:java -Dexec.mainClass="com.example.grpc.GrpcServer"
+或者
+# 运行服务器
+java -cp target/grpc-service-1.0.0.jar com.example.grpc.GrpcServer
+或者
+java -jar target/grpc-service-1.0.0-shaded.jar
+
+
+
+
+# 获取依赖的classpath
+mvn dependency:build-classpath -Dmdep.outputFile=cp.txt
+# 使用classpath运行
+java -cp "target/grpc-service-1.0.0.jar:$(cat cp.txt)" com.example.grpc.GrpcServer
