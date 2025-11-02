@@ -2,19 +2,41 @@ package com.example.grpc;
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import io.grpc.stub.StreamObserver;
 import com.example.grpc.grpc_service.*;
-
-import java.util.concurrent.TimeUnit;
+import io.jsonwebtoken.*;
+import io.jsonwebtoken.security.Keys;
+import javax.crypto.SecretKey;
+import java.security.KeyStore;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.io.File;
+import io.grpc.netty.shaded.io.grpc.netty.GrpcSslContexts;
+import io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder;
+import io.grpc.netty.shaded.io.netty.handler.ssl.SslContext;
 import java.util.Scanner;
+import java.util.concurrent.TimeUnit;
 
 public class GrpcClient {
     private final ManagedChannel channel;
     private final GrpcServiceGrpc.GrpcServiceBlockingStub blockingStub;
 
-    public GrpcClient(String host, int port) {
-        this.channel = ManagedChannelBuilder.forAddress(host, port)
-                .usePlaintext()
+    public GrpcClient(String host, int port) throws Exception {
+        File clientCertChainFile = new File("certs/client.crt");
+        File clientPrivateKeyFile = new File("certs/client.key");
+        File serverCaCertChainFile = new File("certs/server.crt");
+   
+        // 使用Netty的SslContext而不是javax.net.ssl.SSLContext
+        SslContext sslContext = GrpcSslContexts.forClient()
+                .keyManager(clientCertChainFile, clientPrivateKeyFile)
+                .trustManager(serverCaCertChainFile)
                 .build();
+
+        this.channel = NettyChannelBuilder.forAddress(host, port)
+                .sslContext(sslContext)
+                .build();
+        
         this.blockingStub = GrpcServiceGrpc.newBlockingStub(channel);
     }
 
@@ -40,7 +62,7 @@ public class GrpcClient {
     }
 
     public static void main(String[] args) throws Exception {
-        GrpcClient client = new GrpcClient("localhost", 50051);
+        GrpcClient client = new GrpcClient("localhost", 8443);
         try {
             Scanner scanner = new Scanner(System.in);
             

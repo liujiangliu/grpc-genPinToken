@@ -4,9 +4,6 @@ import io.grpc.Server;
 import io.grpc.ServerBuilder;
 import io.grpc.stub.StreamObserver;
 import com.example.grpc.grpc_service.*;
-import java.util.Base64;
-import java.util.Date;
-import java.util.Random;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import javax.crypto.SecretKey;
@@ -14,30 +11,50 @@ import java.security.KeyStore;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.io.File;
+import io.grpc.netty.shaded.io.grpc.netty.GrpcSslContexts;
+import io.grpc.netty.shaded.io.grpc.netty.NettyServerBuilder;
+import io.grpc.netty.shaded.io.netty.handler.ssl.SslContext;
+import java.util.Random;
+import java.util.Date;
+import java.util.Base64;
 
 public class GrpcServer {
     private Server server;
     private final JwtTokenProvider jwtTokenProvider;
 
     public GrpcServer() throws Exception {
-        // 初始化JWT令牌提供者
         this.jwtTokenProvider = new JwtTokenProvider();
     }
 
     private void start() throws Exception {
-        int port = 50051;
-        server = ServerBuilder.forPort(port)
+        int port = 8443;
+
+        // SSL配置 - 使用Netty的SslContext
+        File serverCertChainFile = new File("certs/server.crt");
+        File serverPrivateKeyFile = new File("certs/server.key");
+        File clientCaCertChainFile = new File("certs/client.crt");
+
+        // 使用Netty的SslContext而不是javax.net.ssl.SSLContext
+        SslContext sslContext = GrpcSslContexts.forServer(serverCertChainFile, serverPrivateKeyFile)
+                .trustManager(clientCaCertChainFile)
+                .build();
+
+        server = NettyServerBuilder.forPort(port)
                 .addService(new GrpcServiceImpl())
+                .sslContext(sslContext)
                 .build()
                 .start();
-        System.out.println("Server started, listening on " + port);
         
+
+        System.out.println("Server started, listening on " + port);
+
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             System.err.println("*** shutting down gRPC server since JVM is shutting down");
             GrpcServer.this.stop();
             System.err.println("*** server shut down");
         }));
-        
+
         server.awaitTermination();
     }
 
@@ -123,14 +140,7 @@ public class GrpcServer {
         private final JwtParser jwtParser;
         
         public JwtTokenProvider() throws Exception {
-            // 方案1: 使用KeyStore (推荐用于生产环境)
             this.secretKey = loadKeyFromKeyStore();
-            
-            // 方案2: 使用环境变量或配置文件 (备选方案)
-            // this.secretKey = loadKeyFromEnv();
-            
-            // 方案3: 生成新的密钥 (仅用于开发环境)
-            // this.secretKey = Keys.secretKeyFor(SignatureAlgorithm.HS256);
             
             this.jwtParser = Jwts.parserBuilder()
                     .setSigningKey(secretKey)
@@ -197,7 +207,8 @@ public class GrpcServer {
                 return new JwtValidationResult(false, null, null, "不支持的令牌格式");
             } catch (MalformedJwtException e) {
                 return new JwtValidationResult(false, null, null, "令牌格式错误");
-            } catch (SignatureException e) {
+            } catch (SecurityException e) {
+                // 使用SecurityException替代已弃用的SignatureException
                 return new JwtValidationResult(false, null, null, "令牌签名无效");
             } catch (Exception e) {
                 return new JwtValidationResult(false, null, null, "令牌验证失败: " + e.getMessage());

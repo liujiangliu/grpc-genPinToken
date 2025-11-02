@@ -19,13 +19,10 @@
         <artifactId>maven-compiler-plugin</artifactId>
         <version>3.11.0</version>
         <configuration>
-          <source>11</source>
-          <target>11</target>
+          <release>11</release>
           <compilerArgs>
-            <arg>--add-opens</arg>
-            <arg>java.base/java.lang=ALL-UNNAMED</arg>
-            <arg>--add-opens</arg>
-            <arg>java.base/java.security=ALL-UNNAMED</arg>
+            <arg>-Xlint:unchecked</arg>
+            <arg>-Xlint:deprecation</arg>
           </compilerArgs>
         </configuration>
       </plugin>
@@ -118,8 +115,8 @@
     <protobuf.plugin.version>0.6.1</protobuf.plugin.version>
     <maven.compiler.source>11</maven.compiler.source>
     <jjwt.version>0.11.5</jjwt.version>
-    <protobuf.version>3.19.2</protobuf.version>
+    <protobuf.version>3.23.4</protobuf.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <grpc.version>1.43.2</grpc.version>
+    <grpc.version>1.55.1</grpc.version>
   </properties>
 </project>
